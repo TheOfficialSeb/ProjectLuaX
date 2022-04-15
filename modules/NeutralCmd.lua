@@ -42,6 +42,7 @@ function NeutralCmd:LookForPlayers(Names)
             table.insert(Players,NeutralCmd:LookForPlayer(Name))
         end
     end
+    return Players
 end
 function Methods.SendMessage(self,source,channel)
 	for CommandName,Command in next,NeutralCmd.__commands do
