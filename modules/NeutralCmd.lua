@@ -29,6 +29,20 @@ function NeutralCmd:LookForPlayer(Name)
 		end
 	end
 end
+function NeutralCmd:LookForPlayers(Names)
+    local Players = {}
+    for _,Name in next,Names:split(",") do
+        if Name == "*" then
+            for _,Player in next,_game.Players:GetPlayers() do
+                table.insert(Players,Player)
+            end
+        elseif Name == "." then
+            table.insert(Players,_game.Players.LocalPlayer)
+        else
+            table.insert(Players,NeutralCmd:LookForPlayer(Name))
+        end
+    end
+end
 function Methods.SendMessage(self,source,channel)
 	for CommandName,Command in next,NeutralCmd.__commands do
 		local cmd_match = source:match(Command[2] and ("/"..CommandName) or ("/"..CommandName.."%s+(.+)"))
@@ -61,7 +75,7 @@ NeutralCmd:RegisterCommand("lock",function()
 	local BodyVelocity = Instance.new("BodyVelocity",HumanoidRootPart)
 	BodyVelocity.MaxForce = Vector3.new(1,1,1)*math.huge
 	BodyVelocity.Velocity = Vector3.new()
-end,true) -- HarIinaa
+end,true)
 NeutralCmd:RegisterCommand("to",function(arguments)
 	MessageSender_Module:FindFirstAncestorOfClass("Player").Character.HumanoidRootPart.CFrame = NeutralCmd:LookForPlayer(arguments[1]).Character.HumanoidRootPart.CFrame
 end)
