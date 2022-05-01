@@ -21,9 +21,6 @@ function AnimationTrack.new(Character,KeyframeSequence)
 		return KeyframeA.Time < KeyframeB.Time
 	end)
 	for Index,RawKeyframe in next,RawKeyframes do
-		print(RawKeyframe.Time)
-	end
-	for Index,RawKeyframe in next,RawKeyframes do
 		local Keyframe = {
 			["Time"] = RawKeyframe.Time,
 			["Poses"] = {}
@@ -37,9 +34,6 @@ function AnimationTrack.new(Character,KeyframeSequence)
 			end
 		end
 		Keyframes[Index] = Keyframe
-	end
-	if true then
-		--assert(false,"Paused")
 	end
 	self.Character = Character
 	self.KeyframeSequence = Keyframes
@@ -79,7 +73,9 @@ function AnimationTrack:Play()
 				KeyframeIndex = 1
 				self.TimePosition = 0
 			elseif KeyframeIndex > #self.KeyframeSequence then
-				return self.Event:Disconnect()
+				local E = self.Event
+				self.Event = nil
+				return E:Disconnect()
 			end
 			FrameTime = 0
 			Snapshot = SnapshotMoter6Ds(self.Character)
