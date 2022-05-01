@@ -20,7 +20,7 @@ function AnimationTrack.new(Character,KeyframeSequence)
 	table.sort(RawKeyframes,function(KeyframeA,KeyframeB)
 		return KeyframeA.Time > KeyframeB.Time
 	end)
-	for Index,RawKeyframe in next,KeyframeSequence:GetKeyframes() do
+	for Index,RawKeyframe in next,RawKeyframes do
 		local Keyframe = {
 			["Time"] = RawKeyframe.Time,
 			["Poses"] = {}
@@ -62,6 +62,7 @@ function AnimationTrack:Play()
 		self.TimePosition = self.TimePosition + DeltaTime*self.PlaybackSpeed
 		local Keyframe = self.KeyframeSequence[KeyframeIndex]
 		local Alpha = math.min(1, FrameTime / math.max(1,Keyframe.Time))
+		print(Keyframe.Time)
 		if Keyframe.Time  == 0 then
 			Alpha = 1
 		end
