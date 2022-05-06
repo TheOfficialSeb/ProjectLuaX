@@ -20,6 +20,7 @@ function AnimationTrack.new(Character,KeyframeSequence)
 	table.sort(RawKeyframes,function(KeyframeA,KeyframeB)
 		return KeyframeA.Time < KeyframeB.Time
 	end)
+	local Continue = {}
 	for Index,RawKeyframe in next,RawKeyframes do
 		local Keyframe = {
 			["Time"] = RawKeyframe.Time,
@@ -31,6 +32,12 @@ function AnimationTrack.new(Character,KeyframeSequence)
 					["CFrame"] = RawPose.CFrame
 				}
 				Keyframe[RawPose.Name] = Pose
+				Continue[RawPose.Name] = Pose
+			end
+		end
+		for Index,Value in next,Continue do
+			if not Keyframe[Index] then
+				Keyframe[Index] = Value
 			end
 		end
 		Keyframes[Index] = Keyframe
@@ -52,6 +59,9 @@ function AnimationTrack:Play()
 	local FrameTime = 0
 	self.TimePosition = 0
 	local Snapshot = SnapshotMoter6Ds(self.Character)
+	for Motor6D,_ in next,Snapshot do
+		Snapshot[Motor6D] = CFrame.new()
+	end
 	local KeyframeIndex = 1
 	self.Event = game:GetService("RunService").Stepped:Connect(function(Runtime,DeltaTime)
 		local StepTick = tick()
@@ -63,8 +73,12 @@ function AnimationTrack:Play()
 			Alpha = 1
 		end
 		for _,Descendant in next,self.Character:GetDescendants() do
-			if Descendant:IsA("Motor6D") and Snapshot[Descendant] and Keyframe[Descendant.Part1.Name] then
-				Descendant.Transform = Snapshot[Descendant]:lerp(Keyframe[Descendant.Part1.Name].CFrame,Alpha)
+			if Descendant:IsA("Motor6D") and Snapshot[Descendant] then
+				if Keyframe[Descendant.Part1.Name] then
+					Descendant.Transform = Snapshot[Descendant]:lerp(Keyframe[Descendant.Part1.Name].CFrame,Alpha)
+				elseif Descendant:IsA("Motor6D") and Snapshot[Descendant] then
+					Descendant.Transform = Snapshot[Descendant]
+				end
 			end
 		end
 		if Alpha == 1 then
