@@ -6,10 +6,16 @@ end
 local NeutralCmd = {
 	["__commands"] = {}
 }
-local MessageSender_Module = _game.Players.LocalPlayer:FindFirstChild("MessageSender",true)
+local LocalPlayer = _game.Players.LocalPlayer
+local MessageSender_Module = LocalPlayer:FindFirstChild("MessageSender",true)
+local ClientChatModules = game:GetService("Chat"):WaitForChild("ClientChatModules")
+local Util_Module = ClientChatModules:WaitForChild("MessageCreatorModules"):WaitForChild("Util")
+local ChatSettings_Module = ClientChatModules:WaitForChild("ChatSettings")
 local ChatMain_Module = MessageSender_Module:FindFirstAncestor("ChatMain")
 local MessageSender = require(MessageSender_Module)
 local ChatMain = require(ChatMain_Module)
+local Util = require(Util_Module)
+local ChatSettings = require(ChatSettings_Module)
 local Methods = getmetatable(MessageSender)
 local SendMessage = Methods.SendMessage
 local MessagePosted = ChatMain.MessagePosted
@@ -19,30 +25,78 @@ function NeutralCmd:RegisterCommand(callname,callback,argumentNotRequired)
 	warn("[+](NeutralCmd) "..callname.." Added")
 end
 function NeutralCmd:LookForPlayer(Name)
-    print("\""..Name.."\"")
 	local Username = Name:sub(1,1) == "@"
 	Name = Username and Name:sub(2) or Name
 	for _,Player in next,_game.Players:GetPlayers() do
-	    warn(Username and "Name" or "DisplayName",Player[Username and "Name" or "DisplayName"]:sub(1,#Name):lower(),Name:lower())
 		if Player[Username and "Name" or "DisplayName"]:sub(1,#Name):lower() == Name:lower() then
 			return Player
 		end
 	end
 end
 function NeutralCmd:LookForPlayers(Names)
-    local Players = {}
-    for _,Name in next,Names:split(",") do
-        if Name == "*" then
-            for _,Player in next,_game.Players:GetPlayers() do
-                table.insert(Players,Player)
-            end
-        elseif Name == "." then
-            table.insert(Players,_game.Players.LocalPlayer)
-        else
-            table.insert(Players,NeutralCmd:LookForPlayer(Name))
-        end
-    end
-    return Players
+	local Players = {}
+	for _,Name in next,Names:split(",") do
+		if Name == "*" then
+			for _,Player in next,_game.Players:GetPlayers() do
+				table.insert(Players,Player)
+			end
+		elseif Name == "." then
+			table.insert(Players,_game.Players.LocalPlayer)
+		else
+			table.insert(Players,NeutralCmd:LookForPlayer(Name))
+		end
+	end
+	return Players
+end
+local ChatMessage = {}
+ChatMessage.__index = ChatMessage
+function ChatMessage.__nativecreate(messageData, channelName)
+	local channelObj = Util.ChatWindow:GetChannel(channelName)
+	if (channelObj) then
+		channelObj:AddMessageToChannel(messageData)
+		ChatMain.MessageCount = ChatMain.MessageCount + 1
+		ChatMain.MessagesChanged:fire(ChatMain.MessageCount)
+	end
+end
+function ChatMessage.__nativeupdate(messageData, channelName)
+	local channelObj = Util.ChatWindow:GetChannel(channelName)
+	if channelObj then
+		channelObj:UpdateMessageFiltered(messageData)
+	end
+end
+function ChatMessage:Update(Text)
+	self.__nativeupdate({
+		["Message"] = Text,
+		["MessageType"] = "Message",
+		["FromSpeaker"] = "localhost",
+		["IsFiltered"] = true,
+		["Time"] = math.floor(tick()),
+		["ID"] = self.__id,
+		["OriginalChannel"] = ChatSettings.GeneralChannelName
+	},ChatSettings.GeneralChannelName)
+end
+function NeutralCmd:CreateMessage(Text)
+	local this = setmetatable({},ChatMessage)
+	this.__id = math.pow(math.random()*15,math.random()*15)
+	this.__nativecreate({
+		["Message"] = Text,
+		["MessageType"] = "Message",
+		["FromSpeaker"] = "localhost",
+		["IsFiltered"] = true,
+		["Time"] = math.floor(tick()),
+		["ID"] = this.__id,
+		["OriginalChannel"] = ChatSettings.GeneralChannelName,
+		["ExtraData"] = {
+			["NameColor"] = Color3.fromRGB(255,100,100),
+			["Tags"] = {
+				{
+					TagText = "$",
+					TagColor = Color3.fromRGB(255,100,100)
+				}
+			}
+		}
+	},ChatSettings.GeneralChannelName)
+	return this
 end
 function Methods.SendMessage(self,source,channel)
 	for CommandName,Command in next,NeutralCmd.__commands do
@@ -63,6 +117,20 @@ function ChatMain.MessagePosted:fire(source)
 	end
 	MessagePosted:rfire(source)
 end
+function NewMessage(messageData, channelName)
+	local channelObj = Util.ChatWindow:GetChannel(channelName)
+	if (channelObj) then
+		channelObj:AddMessageToChannel(messageData)
+		ChatMain.MessageCount = ChatMain.MessageCount + 1
+		ChatMain.MessagesChanged:fire(ChatMain.MessageCount)
+	end
+end
+function UpdateMessage(messageData, channelName)
+	local channelObj = Util.ChatWindow:GetChannel(channelName)
+	if channelObj then
+		channelObj:UpdateMessageFiltered(messageData)
+	end
+end
 shared.NeutralCmd = NeutralCmd
 warn("[+] NeutralCmd Added")
 NeutralCmd:RegisterCommand("exit",function()
@@ -81,7 +149,7 @@ NeutralCmd:RegisterCommand("to",function(arguments)
 	MessageSender_Module:FindFirstAncestorOfClass("Player").Character.HumanoidRootPart.CFrame = NeutralCmd:LookForPlayer(arguments[1]).Character.HumanoidRootPart.CFrame
 end)
 NeutralCmd:RegisterCommand("ws",function(arguments)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = tonumber( arguments[1])
+	game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = tonumber( arguments[1])
 end)
 NeutralCmd:RegisterCommand("unlock",function()
 	local HumanoidRootPart = MessageSender_Module:FindFirstAncestorOfClass("Player").Character.HumanoidRootPart
@@ -99,10 +167,10 @@ end,true)
 NeutralCmd:RegisterCommand("rj",function()
 	game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,_game.Players.LocalPlayer)
 end,true)
-NeutralCmd:RegisterCommand("username",function(arguments)
-    setclipboard(NeutralCmd:LookForPlayer(arguments[1]).Name)
-end)
-NeutralCmd:RegisterCommand("userid",function(arguments)
-    setclipboard(NeutralCmd:LookForPlayer(arguments[1]).UserId)
-end)
+--NeutralCmd:RegisterCommand("username",function(arguments)
+--	setclipboard(NeutralCmd:LookForPlayer(arguments[1]).Name)
+--end)
+--NeutralCmd:RegisterCommand("userid",function(arguments)
+--	setclipboard(NeutralCmd:LookForPlayer(arguments[1]).UserId)
+--end)
 return NeutralCmd
