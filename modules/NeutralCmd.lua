@@ -36,6 +36,7 @@ end
 function NeutralCmd:LookForPlayers(Names)
 	local Players = {}
 	for _,Name in next,Names:split(",") do
+		warn(Name)
 		if Name == "*" then
 			for _,Player in next,_game.Players:GetPlayers() do
 				table.insert(Players,Player)
