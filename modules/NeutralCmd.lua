@@ -182,10 +182,12 @@ end,true)
 NeutralCmd:RegisterCommand("rj",function()
 	game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,_game.Players.LocalPlayer)
 end,true)
-NeutralCmd:RegisterCommand("username",function(arguments)
-	setclipboard(NeutralCmd:LookForPlayer(arguments[1]).Name)
-end)
-NeutralCmd:RegisterCommand("userid",function(arguments)
-	setclipboard(NeutralCmd:LookForPlayer(arguments[1]).UserId)
-end)
+if getfenv()["setclipboard"] then
+	NeutralCmd:RegisterCommand("username",function(arguments)
+		setclipboard(NeutralCmd:LookForPlayer(arguments[1]).Name)
+	end)
+	NeutralCmd:RegisterCommand("userid",function(arguments)
+		setclipboard(NeutralCmd:LookForPlayer(arguments[1]).UserId)
+	end)
+end
 return NeutralCmd
