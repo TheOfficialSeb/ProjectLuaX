@@ -75,7 +75,7 @@ function ChatMessage:Update(Text)
 		["OriginalChannel"] = ChatSettings.GeneralChannelName
 	},ChatSettings.GeneralChannelName)
 end
-function NeutralCmd:CreateMessage(Text)
+function NeutralCmd:CreateMessage(Text,ChatColor)
 	local this = setmetatable({},ChatMessage)
 	this.__id = math.pow(math.random()*15,math.random()*15)
 	this.__nativecreate({
@@ -88,6 +88,7 @@ function NeutralCmd:CreateMessage(Text)
 		["OriginalChannel"] = ChatSettings.GeneralChannelName,
 		["ExtraData"] = {
 			["NameColor"] = Color3.fromRGB(255,100,100),
+			["ChatColor"] = ChatColor or Color3.new(1,1,1),
 			["Tags"] = {
 				{
 					TagText = "$",
@@ -102,7 +103,21 @@ function Methods.SendMessage(self,source,channel)
 	for CommandName,Command in next,NeutralCmd.__commands do
 		local cmd_match = source:match(Command[2] and ("/"..CommandName) or ("/"..CommandName.."%s+(.+)"))
 		if cmd_match then
-			pcall(Command[1],Command[2] and {} or cmd_match:gsub("%s+"," "):split(" "))
+			local Success,Error = pcall(Command[1],Command[2] and {} or cmd_match:gsub("%s+"," "):split(" "))
+			if not Success then
+				ChatMessage.__nativecreate({
+					["Message"] = tostring(Error),
+					["MessageType"] = "System",
+					["FromSpeaker"] = "localhost",
+					["IsFiltered"] = true,
+					["Time"] = math.floor(tick()),
+					["ID"] = math.pow(math.random()*15,math.random()*15),
+					["OriginalChannel"] = ChatSettings.GeneralChannelName,
+					["ExtraData"] = {
+						["ChatColor"] = Color3.new(1,0,0),
+					}
+				},ChatSettings.GeneralChannelName)
+			end
 			return
 		end
 	end
@@ -167,10 +182,10 @@ end,true)
 NeutralCmd:RegisterCommand("rj",function()
 	game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,_game.Players.LocalPlayer)
 end,true)
---NeutralCmd:RegisterCommand("username",function(arguments)
---	setclipboard(NeutralCmd:LookForPlayer(arguments[1]).Name)
---end)
---NeutralCmd:RegisterCommand("userid",function(arguments)
---	setclipboard(NeutralCmd:LookForPlayer(arguments[1]).UserId)
---end)
+NeutralCmd:RegisterCommand("username",function(arguments)
+	setclipboard(NeutralCmd:LookForPlayer(arguments[1]).Name)
+end)
+NeutralCmd:RegisterCommand("userid",function(arguments)
+	setclipboard(NeutralCmd:LookForPlayer(arguments[1]).UserId)
+end)
 return NeutralCmd
