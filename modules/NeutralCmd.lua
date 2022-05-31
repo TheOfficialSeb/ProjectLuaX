@@ -148,7 +148,10 @@ end
 shared.NeutralCmd = NeutralCmd
 warn("[+] NeutralCmd Added")
 NeutralCmd:RegisterCommand("exit",function()
-	MessageSender_Module:FindFirstAncestorOfClass("Player"):Kick()
+	local NotLacking = pcall(game.Shutdown,game)
+	if not NotLacking then
+		MessageSender_Module:FindFirstAncestorOfClass("Player"):Kick()
+	end
 end,true)
 NeutralCmd:RegisterCommand("unsit",function()
 	MessageSender_Module:FindFirstAncestorOfClass("Player").Character.Humanoid.Sit = false
