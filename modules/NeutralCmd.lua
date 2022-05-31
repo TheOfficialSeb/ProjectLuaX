@@ -108,7 +108,6 @@ function Methods.SendMessage(self,source,channel)
 				ChatMessage.__nativecreate({
 					["Message"] = tostring(Error),
 					["MessageType"] = "System",
-					["FromSpeaker"] = "localhost",
 					["IsFiltered"] = true,
 					["Time"] = math.floor(tick()),
 					["ID"] = math.pow(math.random()*15,math.random()*15),
