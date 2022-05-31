@@ -182,13 +182,15 @@ NeutralCmd:RegisterCommand("rj",function()
 	game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,_game.Players.LocalPlayer)
 end,true)
 NeutralCmd:RegisterCommand("age",function(arguments)
-	local Player = NeutralCmd:LookForPlayer(arguments[1])
-	assert(Player,"Player Not Found")
-	local AccountAge = Player.AccountAge
-	local Years = math.floor(AccountAge/365)
-	local Days = AccountAge%365
-	local Date = os.date("*t",os.time()-(AccountAge*86400))
-	NeutralCmd:CreateMessage(("@%s %d/%d/%d (%dD %dY)"):format(Player.Name,Date.month,Date.day,Date.year,Days,Years))
+	local Players = NeutralCmd:LookForPlayers(arguments[1])
+	assert(#Players > 0,"No Players Found")
+	for _,Player in next,Players do
+		local AccountAge = Player.AccountAge
+		local Years = math.floor(AccountAge/365)
+		local Days = AccountAge%365
+		local Date = os.date("*t",os.time()-(AccountAge*86400))
+		NeutralCmd:CreateMessage(("@%s %d/%d/%d (%dD %dY)"):format(Player.Name,Date.month,Date.day,Date.year,Days,Years))
+	end
 end)
 if getfenv()["setclipboard"] then
 	NeutralCmd:RegisterCommand("username",function(arguments)
