@@ -6,7 +6,7 @@ end
 local NeutralCmd = {
 	["__commands"] = {}
 }
-local Emojis = _game.HttpService:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json")))
+local Emojis = _game.HttpService:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json"))
 local LocalPlayer = _game.Players.LocalPlayer
 local MessageSender_Module = LocalPlayer:FindFirstChild("MessageSender",true)
 local ClientChatModules = game:GetService("Chat"):WaitForChild("ClientChatModules")
