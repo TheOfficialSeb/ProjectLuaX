@@ -6,6 +6,7 @@ end
 local NeutralCmd = {
 	["__commands"] = {}
 }
+local Emojis = _game.HttpService:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json")))
 local LocalPlayer = _game.Players.LocalPlayer
 local MessageSender_Module = LocalPlayer:FindFirstChild("MessageSender",true)
 local ClientChatModules = game:GetService("Chat"):WaitForChild("ClientChatModules")
@@ -16,7 +17,6 @@ local MessageSender = require(MessageSender_Module)
 local ChatMain = require(ChatMain_Module)
 local Util = require(Util_Module)
 local ChatSettings = require(ChatSettings_Module)
-local Methods = getmetatable(MessageSender)
 local SendMessage = Methods.SendMessage
 local MessagePosted = ChatMain.MessagePosted
 MessagePosted.rfire = MessagePosted.fire
@@ -99,6 +99,15 @@ function NeutralCmd:CreateMessage(Text,ChatColor)
 	},ChatSettings.GeneralChannelName)
 	return this
 end
+function ParseEmojis(text)
+    return text:gsub(":([a-zA-Z0-9]+):",function(name)
+        for _,Emoji in next,Emojis do
+            if name:lower() == Emoji.aliases[1] then
+                return emoji
+            end
+        end
+    end)
+end
 function Methods.SendMessage(self,source,channel)
 	for CommandName,Command in next,NeutralCmd.__commands do
 		local cmd_match = source:match(Command[2] and ("/"..CommandName) or ("/"..CommandName.."%s+(.+)"))
@@ -120,6 +129,7 @@ function Methods.SendMessage(self,source,channel)
 			return
 		end
 	end
+    source = ParseEmojis(source)
 	SendMessage(MessageSender,source,channel)
 end
 function ChatMain.MessagePosted:fire(source)
