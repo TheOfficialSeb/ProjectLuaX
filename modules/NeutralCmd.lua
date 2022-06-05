@@ -100,7 +100,7 @@ function NeutralCmd:CreateMessage(Text,ChatColor)
 	return this
 end
 function ParseEmojis(text)
-    return text:gsub(":([a-zA-Z0-9]+):",function(name)
+    return text:gsub(":([a-zA-Z0-9_]+):",function(name)
         for _,Emoji in next,Emojis do
             if name:lower() == Emoji.aliases[1] then
                 return emoji
@@ -139,6 +139,7 @@ function ChatMain.MessagePosted:fire(source)
 			return
 		end
 	end
+    source = ParseEmojis(source)
 	MessagePosted:rfire(source)
 end
 function NewMessage(messageData, channelName)
