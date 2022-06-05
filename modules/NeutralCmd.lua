@@ -6,7 +6,6 @@ end
 local NeutralCmd = {
 	["__commands"] = {}
 }
-local Emojis = _game.HttpService:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json"))
 local LocalPlayer = _game.Players.LocalPlayer
 local MessageSender_Module = LocalPlayer:FindFirstChild("MessageSender",true)
 local ClientChatModules = game:GetService("Chat"):WaitForChild("ClientChatModules")
@@ -99,11 +98,12 @@ function NeutralCmd:CreateMessage(Text,ChatColor)
 	},ChatSettings.GeneralChannelName)
 	return this
 end
+local Emojis = _game.HttpService:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json"))
 function ParseEmojis(text)
     return text:gsub(":([a-zA-Z0-9_]+):",function(name)
         for _,Emoji in next,Emojis do
             if name:lower() == Emoji.aliases[1] then
-                return emoji
+                return Emoji.emoji
             end
         end
     end)
