@@ -1,8 +1,5 @@
 local AnimationTrack = {}
 AnimationTrack.__index = AnimationTrack
-function InverseLerp(x,y,z)
-	return (z - x) / (y - x)
-end
 function SnapshotMoter6Ds(Model)
 	local Snapshot = {}
 	for _,Descendant in next,Model:GetDescendants() do
