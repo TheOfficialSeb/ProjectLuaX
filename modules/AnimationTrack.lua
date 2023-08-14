@@ -17,27 +17,40 @@ function AnimationTrack.new(Character,KeyframeSequence)
 	table.sort(RawKeyframes,function(KeyframeA,KeyframeB)
 		return KeyframeA.Time < KeyframeB.Time
 	end)
-	local Continue = {}
+	local Used = {}
+	local LastTime = 0
 	for Index,RawKeyframe in next,RawKeyframes do
 		local Keyframe = {
 			["Time"] = RawKeyframe.Time,
-			["Poses"] = {}
+			["Duration"] = RawKeyframe.Time-LastTime,
+			["Pose"] = {}
 		}
+		LastTime = RawKeyframe.Time
 		for _,RawPose in next,RawKeyframe:GetDescendants() do
-			if RawPose.Parent:IsA("Pose") then
-				local Pose = {
+			if RawPose.Parent:IsA("Pose") and RawPose:IsA("Pose") then
+				Keyframe.Pose[RawPose.Name] = {
 					["CFrame"] = RawPose.CFrame
 				}
-				Keyframe[RawPose.Name] = Pose
-				Continue[RawPose.Name] = Pose
+				if RawKeyframe.Time == 0 then
+					Used[RawPose.Name] = RawPose.CFrame
+				elseif not Used[RawPose.Name] then
+					Used[RawPose.Name] = CFrame.new()
+				end
 			end
 		end
-		for Index,Value in next,Continue do
-			if not Keyframe[Index] then
-				Keyframe[Index] = Value
+		for Index,Value in next,Used do
+			if not Keyframe.Pose[Index] then
+				Keyframe.Pose[Index] = Value
 			end
 		end
 		Keyframes[Index] = Keyframe
+	end
+	for _,Keyframe in next,Keyframes do
+		for Index,Value in next,Used do
+			if not Keyframe.Pose[Index] then
+				Keyframe.Pose[Index] = Value
+			end
+		end
 	end
 	self.Character = Character
 	self.KeyframeSequence = Keyframes
@@ -48,31 +61,26 @@ function AnimationTrack:AdjustSpeed(Speed)
 	self.PlaybackSpeed = Speed
 end
 function AnimationTrack:Play()
-	self.StartedAt = tick()
-	local LastStepped = tick()
 	if self.Event then
 		self.Event:Disconnect()
 	end
 	local FrameTime = 0
-	self.TimePosition = 0
 	local Snapshot = SnapshotMoter6Ds(self.Character)
 	for Motor6D,_ in next,Snapshot do
 		Snapshot[Motor6D] = CFrame.new()
 	end
 	local KeyframeIndex = 1
-	self.Event = game:GetService("RunService").Stepped:Connect(function(Runtime,DeltaTime)
-		local StepTick = tick()
-		FrameTime = FrameTime + DeltaTime*self.PlaybackSpeed
-		self.TimePosition = self.TimePosition + DeltaTime*self.PlaybackSpeed
+	self.Event = RunService.Stepped:Connect(function(Runtime,DeltaTime)
+		FrameTime = FrameTime + (DeltaTime*self.PlaybackSpeed)
 		local Keyframe = self.KeyframeSequence[KeyframeIndex]
-		local Alpha = math.min(1, FrameTime / math.max(1,Keyframe.Time))
+		local Alpha = math.min(1, FrameTime / Keyframe.Duration)
 		if Keyframe.Time  == 0 then
 			Alpha = 1
 		end
 		for _,Descendant in next,self.Character:GetDescendants() do
 			if Descendant:IsA("Motor6D") and Snapshot[Descendant] then
-				if Keyframe[Descendant.Part1.Name] then
-					Descendant.Transform = Snapshot[Descendant]:lerp(Keyframe[Descendant.Part1.Name].CFrame,Alpha)
+				if Keyframe.Pose[Descendant.Part1.Name] then
+					Descendant.Transform = Snapshot[Descendant]:lerp(Keyframe.Pose[Descendant.Part1.Name].CFrame,Alpha)
 				elseif Descendant:IsA("Motor6D") and Snapshot[Descendant] then
 					Descendant.Transform = Snapshot[Descendant]
 				end
@@ -82,7 +90,6 @@ function AnimationTrack:Play()
 			KeyframeIndex = KeyframeIndex+1
 			if KeyframeIndex > #self.KeyframeSequence and self.Looped then
 				KeyframeIndex = 1
-				self.TimePosition = 0
 			elseif KeyframeIndex > #self.KeyframeSequence then
 				local E = self.Event
 				self.Event = nil
